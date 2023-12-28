@@ -1,33 +1,32 @@
-use std::{net::{SocketAddr, IpAddr}, error::Error};
-use axum::Router;
-use tokio::net::{TcpListener};
-mod cfg;
+use std::error::Error;
+mod routes;
+
+mod cfg {
+    pub mod db;
+    pub mod server;
+    pub mod env;
+}
+use cfg::{db, server, env};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
-    let config = cfg::init().await?;
+    let config = env::init_env().await?;
 
-    let listener = create_tcp_listener(&config.ip, config.port).await?;
+    let db_url = db::get_db_url(
+        &config.db_user,
+        &config.db_password,
+        &config.db_host,
+        &config.db_port,
+        &config.db_name,
+    ).await;
 
-    start_server(listener).await?;
+    let db_pool = db::init_db(&db_url).await?;
+
+    let listener = server::create_tcp_listener(&config.ip, config.port).await?;
+
+    let router = routes::router();
+    server::start_server(listener, router).await?;
+
     Ok(())
-}
-
-async fn root() -> &'static str {
-    "Hello, Worldfs!"
-}
-
-async fn create_tcp_listener(ip: &str, port: u16) -> Result<TcpListener, Box<dyn Error>> {
-    let addr = format!("{}:{}", ip, port);
-    let listener = TcpListener::bind(addr).await?;
-    tracing::debug!("SERVER STARTED ON {}", listener.local_addr().unwrap());
-    Ok(listener)
-}
-
-async fn start_server(listener: TcpListener) -> Result<(), Box<dyn Error>> {
-    axum::serve(
-        listener,
-        Router::new().route("/", axum::routing::get(root))
-    ).await.map_err(|err| err.into())
 }
