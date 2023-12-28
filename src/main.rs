@@ -23,9 +23,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let db_pool = db::init_db(&db_url).await?;
 
+    db::run_migrations(&db_pool).await?;
     let listener = server::create_tcp_listener(&config.ip, config.port).await?;
 
-    let router = routes::router();
+    let router = routes::router(db_pool.clone());
     server::start_server(listener, router).await?;
 
     Ok(())

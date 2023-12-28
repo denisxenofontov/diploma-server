@@ -26,7 +26,7 @@ pub async fn init_env() -> Result<Env, dotenv::Error>  {
     let db_host = std::env::var("DB_HOST")
         .unwrap_or_else(|_| String::from("localhost"));
     let db_name = std::env::var("DB_NAME")
-        .unwrap_or_else(|_| String::from("postgres"));
+        .unwrap_or_else(|_| String::from("diploma"));
 
     Ok(Env {
         ip,

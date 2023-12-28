@@ -27,7 +27,7 @@ pub async fn init_db(db_url: &str) -> Result<sqlx::Pool<sqlx::Postgres>, sqlx::E
 }
 
 pub async fn run_migrations(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
-    let mut migrator = sqlx::migrate!();
+    let migrator = sqlx::migrate!();
     migrator
         .run(pool)
         .await
